@@ -82,16 +82,18 @@ class FoodWise_Public {
         wp_enqueue_script(
             'foodwise-quiz-kap',
             FOODWISE_PLUGIN_URL . 'assets/js/quiz-kap.js',
-            array('jquery'), // Aggiungo dipendenza jQuery
+            array('jquery'),
             FOODWISE_VERSION,
             true
         );
         
-        // Localizza script
-        wp_localize_script('foodwise-quiz-kap', 'gsm_ajax', array(
+        // Localizza script (foodwisePublic usato da quiz-slider.js, quiz-kap.js e shortcode inline)
+        $public_ajax_data = array(
             'ajaxUrl' => admin_url('admin-ajax.php'),
             'nonce' => wp_create_nonce('foodwise_public_nonce')
-        ));
+        );
+        wp_localize_script('foodwise-quiz-slider', 'foodwisePublic', $public_ajax_data);
+        wp_localize_script('foodwise-quiz-kap', 'foodwisePublic', $public_ajax_data);
     }
     
     /**
@@ -209,7 +211,20 @@ class FoodWise_Public {
         $user_id = FoodWise_Auth::get_current_user_id();
         $quiz_type = isset($_POST['quiz_type']) ? sanitize_text_field($_POST['quiz_type']) : '';
         $current_step = isset($_POST['current_step']) ? intval($_POST['current_step']) : 0;
-        $answers = isset($_POST['progress_data']) ? json_decode(stripslashes($_POST['progress_data']), true) : array();
+
+        // Leggi progress_data (JSON stringa) con fallback a answers (array o JSON)
+        if (isset($_POST['progress_data']) && $_POST['progress_data'] !== '') {
+            $answers = json_decode(stripslashes($_POST['progress_data']), true);
+        } elseif (isset($_POST['answers'])) {
+            $raw = $_POST['answers'];
+            $answers = is_array($raw) ? array_map('sanitize_text_field', $raw) : json_decode(stripslashes($raw), true);
+        } else {
+            $answers = array();
+        }
+        if (!is_array($answers)) {
+            $answers = array();
+        }
+
         $order = isset($_POST['order']) ? $_POST['order'] : null;
         
         $result = FoodWise_Database::save_quiz_progress($user_id, $quiz_type, $current_step, $answers, $order);
@@ -250,6 +265,11 @@ class FoodWise_Public {
         if ($result['success']) {
             // Elimina il progresso al completamento
             FoodWise_Database::delete_quiz_progress($user_id, $quiz_type);
+
+            // Aggiungi redirect_url alla risposta
+            $selection_page_id = get_option('foodwise_selection_page_id');
+            $result['redirect_url'] = $selection_page_id ? get_permalink($selection_page_id) : home_url('/');
+
             wp_send_json_success($result);
         } else {
             wp_send_json_error($result);

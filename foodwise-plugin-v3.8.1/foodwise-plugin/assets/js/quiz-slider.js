@@ -212,7 +212,7 @@
             nonce: foodwisePublic.nonce,
             quiz_type: 'quiz_1',
             current_step: currentStep,
-            answers: answers,
+            progress_data: JSON.stringify(answers),
             order: quiz1Data.questionOrder
         }).done(function(response) {
             console.log('Progressi salvati:', response);
@@ -232,12 +232,21 @@
         var $submitBtn = $('#btnSubmit');
         $submitBtn.prop('disabled', true).text('Invio in corso...');
         
-        var formData = $(this).serialize();
+        var answers = {};
+        $('.answer-input').each(function() {
+            var catId = $(this).attr('id').replace('answer-', '');
+            answers[catId] = $(this).val();
+        });
         
-        $.post(foodwisePublic.ajaxUrl, formData + '&action=foodwise_submit_quiz&nonce=' + foodwisePublic.nonce + '&quiz_type=quiz_1', function(response) {
+        $.post(foodwisePublic.ajaxUrl, {
+            action: 'foodwise_submit_quiz',
+            nonce: foodwisePublic.nonce,
+            quiz_type: 'quiz_1',
+            answers: JSON.stringify(answers)
+        }, function(response) {
             console.log('Risposta invio quiz:', response);
             if (response.success) {
-                location.reload();
+                window.location.href = response.data.redirect_url;
             } else {
                 alert(response.data.message || 'Errore durante l\'invio del quiz.');
                 $submitBtn.prop('disabled', false).text('Invia');

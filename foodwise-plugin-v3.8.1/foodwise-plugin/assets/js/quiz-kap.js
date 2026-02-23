@@ -145,14 +145,14 @@
      * Salvataggio progressi via AJAX (jQuery)
      */
     function saveProgress() {
-        if (typeof gsm_ajax === 'undefined' || !gsm_ajax.ajaxUrl) return;
+        if (typeof foodwisePublic === 'undefined' || !foodwisePublic.ajaxUrl) return;
 
         $.ajax({
-            url: gsm_ajax.ajaxUrl,
+            url: foodwisePublic.ajaxUrl,
             type: 'POST',
             data: {
                 action: 'foodwise_save_progress',
-                nonce: gsm_ajax.nonce,
+                nonce: foodwisePublic.nonce,
                 quiz_type: state.quizType,
                 current_step: state.currentStep,
                 progress_data: JSON.stringify(state.answers)
@@ -170,7 +170,7 @@
      * Conclusione del Quiz
      */
     function finishQuiz() {
-        if (typeof gsm_ajax === 'undefined' || !gsm_ajax.ajaxUrl) return;
+        if (typeof foodwisePublic === 'undefined' || !foodwisePublic.ajaxUrl) return;
 
         var $nextBtn = $('#next-btn');
         if ($nextBtn.length) {
@@ -179,11 +179,11 @@
         }
 
         $.ajax({
-            url: gsm_ajax.ajaxUrl,
+            url: foodwisePublic.ajaxUrl,
             type: 'POST',
             data: {
                 action: 'foodwise_submit_quiz',
-                nonce: gsm_ajax.nonce,
+                nonce: foodwisePublic.nonce,
                 quiz_type: state.quizType,
                 answers: JSON.stringify(state.answers)
             },
