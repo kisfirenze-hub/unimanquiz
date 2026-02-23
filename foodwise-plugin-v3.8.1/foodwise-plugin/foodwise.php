@@ -20,29 +20,11 @@ if (!defined('WPINC')) {
 }
 
 // Versione del plugin
-define('FOODWISE_VERSION', '3.5.0');
+define('FOODWISE_VERSION', '3.8.1');
+define('FOODWISE_PLUGIN_FILE', __FILE__);
 define('FOODWISE_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('FOODWISE_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('FOODWISE_PLUGIN_BASENAME', plugin_basename(__FILE__));
-
-/**
- * Codice eseguito durante l'attivazione del plugin.
- */
-function activate_foodwise() {
-    require_once FOODWISE_PLUGIN_DIR . 'includes/class-foodwise-activator.php';
-    FoodWise_Activator::activate();
-}
-
-/**
- * Codice eseguito durante la disattivazione del plugin.
- */
-function deactivate_foodwise() {
-    require_once FOODWISE_PLUGIN_DIR . 'includes/class-foodwise-deactivator.php';
-    FoodWise_Deactivator::deactivate();
-}
-
-register_activation_hook(__FILE__, 'activate_foodwise');
-register_deactivation_hook(__FILE__, 'deactivate_foodwise');
 
 /**
  * Caricamento delle classi principali del plugin
@@ -56,19 +38,59 @@ require_once FOODWISE_PLUGIN_DIR . 'admin/class-foodwise-admin.php';
 require_once FOODWISE_PLUGIN_DIR . 'public/class-foodwise-public.php';
 
 /**
- * Inizializzazione del plugin
+ * Bootstrap principale del plugin
  */
-function run_foodwise() {
-    // Inizializza componenti admin
-    $plugin_admin = new FoodWise_Admin();
-    
-    // Inizializza componenti pubblici
-    $plugin_public = new FoodWise_Public();
-    
-    // Hook per inizializzazione
-    add_action('init', array($plugin_admin, 'init'));
-    add_action('init', array($plugin_public, 'init'));
+class FoodWise_Plugin {
+    /**
+     * @var FoodWise_Admin
+     */
+    private $admin;
+
+    /**
+     * @var FoodWise_Public
+     */
+    private $public;
+
+    /**
+     * @var bool
+     */
+    private $initialized = false;
+
+    public function register_hooks() {
+        register_activation_hook(FOODWISE_PLUGIN_FILE, array(__CLASS__, 'activate'));
+        register_deactivation_hook(FOODWISE_PLUGIN_FILE, array(__CLASS__, 'deactivate'));
+
+        add_action('init', array($this, 'init'));
+    }
+
+    public static function activate() {
+        require_once FOODWISE_PLUGIN_DIR . 'includes/class-foodwise-activator.php';
+        FoodWise_Activator::activate();
+    }
+
+    public static function deactivate() {
+        require_once FOODWISE_PLUGIN_DIR . 'includes/class-foodwise-deactivator.php';
+        FoodWise_Deactivator::deactivate();
+    }
+
+    public function init() {
+        if ($this->initialized) {
+            return;
+        }
+
+        if (!$this->admin) {
+            $this->admin = new FoodWise_Admin();
+        }
+
+        if (!$this->public) {
+            $this->public = new FoodWise_Public();
+        }
+
+        $this->admin->init();
+        $this->public->init();
+        $this->initialized = true;
+    }
 }
 
 // Avvia il plugin
-run_foodwise();
+(new FoodWise_Plugin())->register_hooks();
