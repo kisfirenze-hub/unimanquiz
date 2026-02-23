@@ -160,6 +160,13 @@ Puoi utilizzare questi shortcode in qualsiasi pagina o post.
 - `wp_foodwise_submissions` - Storico compilazioni
 - `wp_foodwise_csv_uploads` - Log upload CSV
 
+## Architettura Plugin
+
+Il bootstrap è stato progettato con un coordinatore unico (`FoodWise_Plugin`) che:
+- registra hook di attivazione/disattivazione;
+- inizializza in modo centralizzato i componenti `FoodWise_Admin` e `FoodWise_Public` su `init`;
+- mantiene separazione tra lifecycle del plugin e logica funzionale dei moduli.
+
 ## Sicurezza
 
 Il plugin implementa le seguenti misure di sicurezza:
